@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 from langchain_community.chat_models import ChatDeepInfra
 from prompt import prompt_for_chapter_1
 # from new_prompt import sys_prompt
-from prompt import sys_prompt
+from prompt import chapter_0
+from prompt import prompt_for_chapter_2
 from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
@@ -97,8 +98,10 @@ def main():
                 )
     
     print(len(st.session_state.chat_history))
-
-    system_prompt = sys_prompt()
+    if len(st.session_state.chat_history) >= 5:
+        system_prompt = prompt_for_chapter_2()
+    else: 
+        system_prompt = chapter_0()
 
     if user_question:
 
