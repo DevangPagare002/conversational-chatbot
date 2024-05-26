@@ -8,9 +8,10 @@ from langchain_core.prompts import (
     MessagesPlaceholder,
 )
 from dotenv import load_dotenv
-from langchain_community.llms import DeepInfra
+from langchain_community.chat_models import ChatDeepInfra
 from prompt import prompt_for_chapter_1
-from prompt import prompt_for_chapter_2
+# from new_prompt import sys_prompt
+from prompt import sys_prompt
 from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
@@ -49,16 +50,39 @@ def main():
     </div>
     """
 
-    groq_api_key = os.getenv("GROQ_API_KEY")
-    
-    deepinfra_api_key = os.getenv("DEEPINFRA_API_TOKEN")
+    api_to_use = st.sidebar.selectbox(
+        "Choose the family of models",
+        ["Groq Models", "Deepinfra Models"]
+    )
+
+    st.session_state.model_family = [{"model_family":api_to_use}]
+
+    if api_to_use=="Groq Models":
+        model_selection = st.sidebar.selectbox(
+            'Choose a model',
+            ['llama3-8b-8192', 'mixtral-8x7b-32768', 'gemma-7b-it']
+        )
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        llm = ChatGroq(
+                groq_api_key=groq_api_key, 
+                model_name=model_selection
+        )
+    elif api_to_use=="Deepinfra Models":
+        model_selection = st.sidebar.selectbox(
+            'Choose a model',
+            ['lizpreciatior/lzlv_70b_fp16_hf', 'mistralai/Mixtral-8x22B-Instruct-v0.1', 'Gryphe/MythoMax-L2-13b-turbo']
+        )
+        deepinfra_api_key = os.getenv("DEEPINFRA_API_TOKEN")
+        llm = ChatDeepInfra(model_id=model_selection)
+        llm.model_kwargs = {
+            "temperature": 0.2,
+            "repetition_penalty": 1.2,
+            "max_new_tokens": 250,
+            "top_p": 0.9,
+        }
 
     st.title("Testing the LLMs!")
-    model = st.sidebar.selectbox(
-        'Choose a model',
-        ['llama3-8b-8192', 'mixtral-8x7b-32768', 'gemma-7b-it']
-    )
-    conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value = 5)
+    conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 25, value = 10)
     memory = ConversationBufferWindowMemory(k=conversational_memory_length, memory_key="chat_history", return_messages=True)
 
     user_question = st.text_input("Ask a question:")
@@ -71,21 +95,10 @@ def main():
                 {'input':message['human']},
                 {'output':message['AI']}
                 )
-    groq_chat = ChatGroq(
-            groq_api_key=groq_api_key, 
-            model_name=model
-    )
+    
     print(len(st.session_state.chat_history))
-    llm = DeepInfra(model_id="lizpreciatior/lzlv_70b_fp16_hf")
-    llm.model_kwargs = {
-        "temperature": 0.2,
-        "repetition_penalty": 1.2,
-        "max_new_tokens": 250,
-        "top_p": 0.9,
-    }
 
-
-    system_prompt = prompt_for_chapter_1()
+    system_prompt = sys_prompt()
 
     if user_question:
 
@@ -104,7 +117,8 @@ def main():
                 ),
             ]
         )
-    # print(prompt)
+        print(prompt)
+
         conversation = LLMChain(
             llm=llm,  
             prompt=prompt,  
@@ -112,7 +126,6 @@ def main():
             memory=memory,  
         )
 
-        
         response = conversation.predict(human_input=user_question)
         message = {'human':user_question,'AI':response}
         st.session_state.chat_history.append(message)
