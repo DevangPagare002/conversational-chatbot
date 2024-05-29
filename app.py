@@ -13,6 +13,11 @@ from prompt import prompt_for_chapter_1
 # from new_prompt import sys_prompt
 from prompt import chapter_0
 from prompt import prompt_for_chapter_2
+from prompt import attempt12
+from prompt import attempt13
+from prompt import attempt14
+from cdifflib import CSequenceMatcher
+import difflib
 from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
@@ -101,7 +106,7 @@ def main():
     if len(st.session_state.chat_history) >= 5:
         system_prompt = prompt_for_chapter_2()
     else: 
-        system_prompt = chapter_0()
+        system_prompt = attempt13()
 
     if user_question:
 
@@ -109,11 +114,11 @@ def main():
             [
                 SystemMessage(
                     content = system_prompt
-                ),  
-
+                ),
+                
                 MessagesPlaceholder(
                     variable_name="chat_history"
-                ), 
+                ),
 
                 HumanMessagePromptTemplate.from_template(
                     "{human_input}"
@@ -135,6 +140,75 @@ def main():
         st.write("Chatbot:", response)
         st.subheader("Chat history - ")
         st.write(st.session_state.chat_history)
+        boring_json = {
+            "IndicatingDisinterestOrWantingToEndConversation": {
+              "OneWordResponses": [
+                "Okay",
+                "Sure",
+                "Yeah",
+                "Fine",
+                "Cool",
+                "K"
+              ],
+              "NoncommittalOrVagueReplies": [
+                "Maybe",
+                "I guess",
+                "Not sure",
+                "We'll see"
+              ],
+              "ExplicitExpressionsOfDisinterest": [
+                "I don't care",
+                "Whatever",
+                "It doesn't matter",
+                "Not really interested",
+                "Let's drop it"
+              ],
+              "MinimalEngagement": [
+                "Uh-huh",
+                "Mm-hmm",
+                "Right",
+                "Got it"
+              ]
+            },
+            "IndicatingDesireToChangeTopic": {
+              "RedirectingStatements": [
+                "Anyway...",
+                "By the way...",
+                "That reminds me...",
+                "Speaking of which..."
+              ],
+              "QuestionsToShiftFocus": [
+                "Have you heard about...?",
+                "What do you think about...?",
+                "Did you see...?",
+                "What's your opinion on...?"
+              ],
+              "StatementsSignalingShift": [
+                "On a different note...",
+                "Changing the subject...",
+                "That’s enough about that...",
+                "Let’s talk about something else..."
+              ]
+            },
+            "NonVerbalCuesInTextForm": {
+              "DelaysInResponse": [
+                "Taking a long time to reply",
+                "Responding with \"...\""
+              ],
+              "UseOfEmojis": [
+                "👍",
+                "😐",
+                "😴"
+              ]
+            }
+        }
+        boring_list = boring_json["IndicatingDisinterestOrWantingToEndConversation"]["OneWordResponses"] + boring_json["IndicatingDisinterestOrWantingToEndConversation"]["NoncommittalOrVagueReplies"] + boring_json["IndicatingDisinterestOrWantingToEndConversation"]["ExplicitExpressionsOfDisinterest"]
+        if len(st.session_state.chat_history) > 3:
+            li = st.session_state.chat_history[-1:-3]
+            s = difflib.SequenceMatcher(None, li, boring_list)
+            print("########################################################")
+            print(s.ratio())
+            print("############################################")
     st.markdown(footer,unsafe_allow_html=True)
 
 
