@@ -7,15 +7,22 @@ from langchain_core.prompts import (
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
 )
+import time
 from dotenv import load_dotenv
 from langchain_community.chat_models import ChatDeepInfra
-from prompt import prompt_for_chapter_1
+from prompts.chapter1.prompt import prompt_for_chapter_1
 # from new_prompt import sys_prompt
-from prompt import chapter_0
-from prompt import prompt_for_chapter_2
-from prompt import attempt12
-from prompt import attempt13
-from prompt import attempt14
+from prompts.chapter1.prompt import chapter_0
+from prompts.chapter1.prompt import prompt_for_chapter_2
+from prompts.chapter1.prompt import attempt12
+from prompts.chapter1.prompt import attempt13
+from prompts.chapter1.prompt import attempt14
+from prompts.chapter1.prompt import attempt15
+from prompts.chapter1.prompt import attempt16
+from prompts.chapter1.prompt import attempt17
+from prompts.chapter2.prompt import attempt1
+from prompts.chapter2.prompt import attempt2
+from prompts.chapter3.prompt import chapter3_prompt
 from cdifflib import CSequenceMatcher
 import difflib
 from langchain_core.messages import SystemMessage
@@ -181,11 +188,26 @@ def main():
                 )
     
     print(len(st.session_state.chat_history))
-    if len(st.session_state.chat_history) >= 5:
-        system_prompt = prompt_for_chapter_2()
-    else: 
-        system_prompt = attempt13()
 
+    if len(st.session_state.chat_history) == 20:
+        with st.spinner('Changing to chapter 2...please wait!'):
+            time.sleep(5)
+        st.success('Done!')
+    if len(st.session_state.chat_history) == 40:
+        with st.spinner('Changing to chapter 3...please wait!'):
+            time.sleep(5)
+        st.success('Done!')
+
+    if len(st.session_state.chat_history) >= 40:
+        print("chapter 3")
+        system_prompt = chapter3_prompt()
+    elif len(st.session_state.chat_history) >= 20: 
+        print("chapter 2")
+        system_prompt = attempt1()
+    else:
+        print("chapter 1")
+        system_prompt = attempt15()
+    
     if user_question:
 
         prompt = ChatPromptTemplate.from_messages(
@@ -218,7 +240,7 @@ def main():
         st.write("Chatbot:", response)
         st.subheader("Chat history - ")
         st.write(st.session_state.chat_history)
-        st.write(using_difflib())
+        # st.write(using_difflib())
     st.markdown(footer,unsafe_allow_html=True)
 
 
